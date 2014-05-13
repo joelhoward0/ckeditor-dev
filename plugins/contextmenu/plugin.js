@@ -5,7 +5,7 @@
 
 CKEDITOR.plugins.add( 'contextmenu', {
 	requires: 'menu',
-	lang: 'af,ar,bg,bn,bs,ca,cs,cy,da,de,el,en-au,en-ca,en-gb,en,eo,es,et,eu,fa,fi,fo,fr-ca,fr,gl,gu,he,hi,hr,hu,is,it,ja,ka,km,ko,ku,lt,lv,mk,mn,ms,nb,nl,no,pl,pt-br,pt,ro,ru,sk,sl,sr-latn,sr,sv,th,tr,ug,uk,vi,zh-cn,zh', // %REMOVE_LINE_CORE%
+	lang: 'af,ar,bg,bn,bs,ca,cs,cy,da,de,el,en-au,en-ca,en-gb,en,eo,es,et,eu,fa,fi,fo,fr-ca,fr,gl,gu,he,hi,hr,hu,is,it,ja,ka,km,ko,ku,lt,lv,mk,mn,ms,nb,nl,no,pl,pt-br,pt,ro,ru,sk,sl,sq,sr-latn,sr,sv,th,tr,ug,uk,vi,zh-cn,zh', // %REMOVE_LINE_CORE%
 
 	// Make sure the base class (CKEDITOR.menu) is loaded before it (#3318).
 	onLoad: function() {
@@ -24,7 +24,7 @@ CKEDITOR.plugins.add( 'contextmenu', {
 			},
 
 			proto: {
-				addTarget: function( element, nativeContextMenuOnCtrl ) {
+				addTarget: function( element, defaultContextMenu, ctrlContextMenu ) {
 					// Opera doesn't support 'contextmenu' event, we have duo approaches employed here:
 					// 1. Inherit the 'button override' hack we introduced in v2 (#4530), while this require the Opera browser
 					//  option 'Allow script to detect context menu/right click events' to be always turned on.
@@ -41,8 +41,9 @@ CKEDITOR.plugins.add( 'contextmenu', {
 								return;
 							}
 
-							if ( nativeContextMenuOnCtrl && ( CKEDITOR.env.mac ? evt.$.metaKey : evt.$.ctrlKey ) )
-								return;
+              var isCtrlContextMenu = CKEDITOR.env.mac ? evt.$.metaKey : evt.$.ctrlKey;
+              if((isCtrlContextMenu && ctrlContextMenu == 'browser') || (!isCtrlContextMenu && defaultContextMenu == 'browser')) 
+                return;
 
 							var target = evt.getTarget();
 
@@ -72,12 +73,11 @@ CKEDITOR.plugins.add( 'contextmenu', {
 					element.on( 'contextmenu', function( event ) {
 						var domEvent = event.data;
 
-						if ( nativeContextMenuOnCtrl &&
 						// Safari on Windows always show 'ctrlKey' as true in 'contextmenu' event,
 						// which make this property unreliable. (#4826)
-						( CKEDITOR.env.webkit ? holdCtrlKey : ( CKEDITOR.env.mac ? domEvent.$.metaKey : domEvent.$.ctrlKey ) ) )
-							return;
-
+						var isCtrlContextMenu = ( CKEDITOR.env.webkit ? holdCtrlKey : ( CKEDITOR.env.mac ? domEvent.$.metaKey : domEvent.$.ctrlKey ) );
+            if((isCtrlContextMenu && ctrlContextMenu == 'browser') || (!isCtrlContextMenu && defaultContextMenu == 'browser')) 
+              return;
 
 						// Cancel the browser context menu.
 						domEvent.preventDefault();
@@ -139,7 +139,7 @@ CKEDITOR.plugins.add( 'contextmenu', {
 		var contextMenu = editor.contextMenu = new CKEDITOR.plugins.contextMenu( editor );
 
 		editor.on( 'contentDom', function() {
-			contextMenu.addTarget( editor.editable(), editor.config.browserContextMenuOnCtrl !== false );
+			contextMenu.addTarget( editor.editable(), editor.config.defaultContextMenu, editor.config.ctrlContextMenu );
 		});
 
 		editor.addCommand( 'contextMenu', {
@@ -154,13 +154,23 @@ CKEDITOR.plugins.add( 'contextmenu', {
 });
 
 /**
- * Whether to show the browser native context menu when the *Ctrl* or
+ * Sets the context menu that will open by default with a right click
+ *
+ *		config.defaultContextMenu = 'ckeditor';
+ *
+ * @since 3.0.2
+ * @cfg {String} [defaultContextMenu='ckeditor']
+ * @member CKEDITOR.config
+ */
+
+/**
+ * Sets the context menu ('browser' or 'ckeditor') that will show when the *Ctrl* or
  * *Meta* (Mac) key is pressed on opening the context menu with the
  * right mouse button click or the *Menu* key.
  *
- *		config.browserContextMenuOnCtrl = false;
+ *		config.ctrlContextMenu = 'browser';
  *
  * @since 3.0.2
- * @cfg {Boolean} [browserContextMenuOnCtrl=true]
+ * @cfg {String} [config.ctrlContextMenu='browser']
  * @member CKEDITOR.config
  */
